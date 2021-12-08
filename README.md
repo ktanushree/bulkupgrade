@@ -9,6 +9,13 @@ The script expects a CSV with the following headers:
 
 CSVHEADER = ["serial_number","software_version","download_time","upgrade_time","interfaces", "download_interval", "upgrade_interval"]
 
+#### Note:
+* **download_time** and **upgrade_time** expect time in UTC time zone in the following format: **MM-DD-YYYY HH:MM:SS**
+
+* **download_interval** and **upgrade_interval** expects duration in **minutes**
+
+* If no timestamps are provided, upgrade will be executed right away.
+
 
 #### Requirements
 * Active Prisma SDWAN Account
