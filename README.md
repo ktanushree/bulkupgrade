@@ -30,7 +30,7 @@ Bulk Upgrade IONs from CSV
 ```
 ./bulkupgrade.py -F devicedata.csv
 ```
-Bulk Abort IONs from CSV
+Abort scheduled upgrades on IONs from CSV
 ```
 ./bulkupgrade.py -F devicedata.csv --abort
 ```
