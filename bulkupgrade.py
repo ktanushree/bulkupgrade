@@ -2,7 +2,7 @@
 """
 Prisma SDWAN Bulk Device Upgrades
 tkamath@paloaltonetworks.com
-Version: 1.0.0 b1
+Version: 1.0.1 b1
 """
 # standard modules
 import getpass
@@ -28,6 +28,7 @@ import codecs
 SDK_VERSION = cloudgenix.version
 SCRIPT_NAME = 'Prisma SD-WAN: Bulk Device Upgrade'
 CSVHEADER = ["serial_number","software_version","download_time","upgrade_time","interfaces","download_interval","upgrade_interval"]
+CSVHEADER_ABORT = ["serial_number"]
 
 # Set NON-SYSLOG logging to use function name
 logger = logging.getLogger(__name__)
@@ -135,6 +136,27 @@ def create_dicts(cgx_session):
 
 def remove_bom(line):
     return line[3:] if line.startswith(codecs.BOM_UTF8) else line
+
+
+def abort_upgrades(devicelist, cgx_session):
+    for i, row in devicelist.iterrows():
+        hwid = row["serial_number"]
+        if hwid in elem_hwid_id.keys():
+            elemid = elem_hwid_id[hwid]
+
+            data = {
+                "action": "abort_upgrade",
+                "parameters": None
+            }
+
+            resp = cgx_session.post.operations_e(element_id=elemid, data=data)
+            if resp.cgx_status:
+                print("Upgrade aborted for {}".format(hwid))
+            else:
+                print("ERR: Could not abort upgrade for {}".format(hwid))
+                cloudgenix.jd_detailed(resp)
+
+    return
 
 
 def upgrade_device(device_data,cgx_session):
@@ -252,11 +274,16 @@ def go():
                                                        "CSV file should contain the follow headers: "
                                                        "serial_number,software_version,download_time,upgrade_time,interfaces,download_interval,upgrade_interval", default=None)
 
+    device_group.add_argument("--abort", "-A", help="Abort Scheduled Upgrades",
+                              default=False, action="store_true")
+
     debug_group = parser.add_argument_group('Debug', 'These options enable debugging output')
     debug_group.add_argument("--debug", "-D", help="Verbose Debug info, levels 0-2", type=int,
                              default=0)
 
     args = vars(parser.parse_args())
+
+    abort = args["abort"]
 
     if args['debug'] == 1:
         logging.basicConfig(level=logging.INFO,
@@ -294,9 +321,15 @@ def go():
         csvdata = pd.read_csv(filename)
         csvdata = csvdata.replace({np.nan: None})
         columns = csvdata.columns.values
-        if set(columns) != set(CSVHEADER):
-            print("ERR: Invalid CSV file format!\nCSV Header:{}\nExpected Header:{}".format(columns,CSVHEADER))
-            sys.exit()
+
+        if abort:
+            if "serial_number" not in columns:
+                print("ERR: Invalid CSV file format!\nCSV Header:{}\nPlease include column: serial_number".format(columns))
+                sys.exit()
+        else:
+            if set(columns) != set(CSVHEADER):
+                print("ERR: Invalid CSV file format!\nCSV Header:{}\nExpected Header:{}".format(columns,CSVHEADER))
+                sys.exit()
 
 
     # login logic. Use cmdline if set, use AUTH_TOKEN next, finally user/pass from config file, then prompt.
@@ -335,7 +368,13 @@ def go():
     # Create Translation Dicts
     ############################################################################
     create_dicts(cgx_session)
-    upgrade_device(device_data=csvdata,cgx_session=cgx_session)
+    if abort:
+        print("INFO: Aborting scheduled upgrades")
+        abort_upgrades(devicelist=csvdata, cgx_session=cgx_session)
+
+    else:
+        print("INFO: Performing Bulk Device Upgrades")
+        upgrade_device(device_data=csvdata,cgx_session=cgx_session)
     # get time now.
     curtime_str = datetime.datetime.utcnow().strftime('%Y-%m-%d-%H-%M-%S')
     # create file-system friendly tenant str.

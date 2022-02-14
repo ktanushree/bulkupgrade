@@ -4,18 +4,14 @@ This script is used to initiate bulk upgrade on Prisma SD-WAN ION devices.
 #### Synopsis
 This script can be used to issue upgrades across multiple Prisma SD-WAN IONs in your network.  
 Devices to be upgrades need to be provided in a CSV file. The script allows the end user to schedule both the software download and upgrade time, in addition to acceptable timeouts for these operations.
+The script can also be used to abort scheduled upgrades.
 
-The script expects a CSV with the following headers:
+To schedule an upgrade, the script expects a CSV with the following headers:
 
 CSVHEADER = ["serial_number","software_version","download_time","upgrade_time","interfaces", "download_interval", "upgrade_interval"]
 
-#### Note:
-* **download_time** and **upgrade_time** expect time in UTC time zone in the following format: **MM-DD-YYYY HH:MM:SS**
-
-* **download_interval** and **upgrade_interval** expects duration in **minutes**
-
-* If no timestamps are provided, upgrade will be executed right away.
-
+To abort upgrades, you can reuse the CSV file used to schedule the upgrade or a new file with the list of device serial numbers where upgrade needs to be aborted.
+Make sure the column is named "serial_number".
 
 #### Requirements
 * Active Prisma SDWAN Account
@@ -34,12 +30,18 @@ Bulk Upgrade IONs from CSV
 ```
 ./bulkupgrade.py -F devicedata.csv
 ```
-
+Bulk Abort IONs from CSV
+```
+./bulkupgrade.py -F devicedata.csv --abort
+```
+```
+./bulkupgrade.py -A -F devicedata.csv 
+```
 
 #### Help Text:
 ```angular2
 TanushreesMacbook:bulkupgrade tkamath$ ./bulkupgrade.py -h
-usage: bulkupgrade.py [-h] [--controller CONTROLLER] [--insecure] [--email EMAIL] [--pass PASS] [--filename FILENAME] [--debug DEBUG]
+usage: bulkupgrade.py [-h] [--controller CONTROLLER] [--insecure] [--email EMAIL] [--pass PASS] [--filename FILENAME] [--abort] [--debug DEBUG]
 
 Prisma SD-WAN: Bulk Device Upgrade.
 
@@ -66,6 +68,7 @@ Device CSV:
 
   --filename FILENAME, -F FILENAME
                         Name of the file with path. CSV file should contain the follow headers: serial_number,software_version,download_time,upgrade_time,interfaces,download_interval,upgrade_interval
+  --abort, -A           Abort Scheduled Upgrades
 
 Debug:
   These options enable debugging output
@@ -78,6 +81,7 @@ TanushreesMacbook:bulkupgrade tkamath$
 #### Version
 | Version | Build | Changes |
 | ------- | ----- | ------- |
+| **1.0.1** | **b1** | Added support to abort upgrades |
 | **1.0.0** | **b1** | Initial Release. |
 
 
