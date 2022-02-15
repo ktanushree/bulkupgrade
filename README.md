@@ -10,6 +10,9 @@ To schedule an upgrade, the script expects a CSV with the following headers:
 
 CSVHEADER = ["serial_number","software_version","download_time","upgrade_time","interfaces", "download_interval", "upgrade_interval"]
 
+Note: 
+**upgrade_time** and **download_time** need to be in **UTC** and have the following format **"MM-DD-YYYY HH:MM:SS"**
+
 To abort upgrades, you can reuse the CSV file used to schedule the upgrade or a new file with the list of device serial numbers where upgrade needs to be aborted.
 Make sure the column is named "serial_number".
 
